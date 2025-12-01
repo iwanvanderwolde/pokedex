@@ -48,7 +48,3 @@ export default {
     </form>
   </div>
 </template>
-
-<style scoped>
-/* Add your styles here */
-</style>

@@ -26,7 +26,6 @@ export default {
   methods: {
     async searchPokemon() {
       if (this.searchTerm.length > 2) {
-        console.log('Searching for:', this.searchTerm); // Debugging line to check the search term
         const response = await fetch(`http://localhost:3000/pokemons/search?searchTerm=${this.searchTerm}`);
         this.pokemons = await response.json();
       } else {
@@ -36,7 +35,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/* Add your styles here */
-</style>

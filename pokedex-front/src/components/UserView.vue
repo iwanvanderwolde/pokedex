@@ -11,7 +11,6 @@ export default {
     try {
       const response = await fetch('http://localhost:3000/pokemons/users_and_favorite_pokemons')
       const data = await response.json();
-      console.log(data.user)
       this.favorite_pokemons = data.favorite_pokemons.map(pokemonList => pokemonList.map(pokemon => pokemon.name));
       this.user = data.user;
     } catch (error) {
