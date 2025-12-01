@@ -1,3 +1,4 @@
+javascript
 import {v4 as uuidv4} from 'uuid';
 
 class ImportController {
@@ -7,30 +8,34 @@ class ImportController {
     }
 
     async initializeDb() {
+        // Dynamic import so `app.js` can import this controller without causing circular dependency issues
         const {db: importedDb} = await import("../app.js");
         this.db = importedDb;
 
+        // Ensure abilities exist before linking when importing Pokémons
         await this.retrieveAbilitiesFromDb();
 
+        // Then check and import Pokémons
         await this.retrievePokemonsFromDb();
     }
 
     async retrievePokemonsFromDb() {
         const query = "SELECT * FROM main.pokemons";
         const result = this.db.prepare(query).all();
+        // Pass current DB count so fetchPokemons can decide whether to fetch more
         await this.fetchPokemons(result.length);
-
     }
 
 
     async fetchPokemons(resultLength) {
 
+        // Batch size for API requests to balance speed and rate limits
         const limit = 50;
         let offset = 0;
         let allPokemon = [];
         let totalCount = 0;
 
-
+        // First fetch total count to know when to stop
         try {
             const response = await fetch("https://pokeapi.newdeveloper.nl/api/v2/pokemon?limit=1");
             if (!response.ok) throw new Error(`Failed to fetch total count: ${response.status}`);
@@ -41,6 +46,7 @@ class ImportController {
             return;
         }
 
+        // Loop until DB has as many as the API reports
         while (resultLength < totalCount) {
 
             console.log(`🔄 Fetching Pokémon: ${offset + 1} to ${offset + limit}...`);
@@ -55,6 +61,7 @@ class ImportController {
                 }
                 const batchData = await batchResponse.json();
                 if (batchData.results.length === 0) {
+                    // No results in this page — skip ahead
                     console.warn(`⚠️ No Pokémon found at offset ${offset}, skipping...`);
                     offset += limit;
                     if (resultLength < totalCount) {
@@ -64,12 +71,14 @@ class ImportController {
                     }
                 }
 
+                // Fetch details for each Pokémon in parallel for speed
                 const detailedPokemon = await Promise.all(
                     batchData.results.map(async (pokemon) => {
                         try {
                             const detailsResponse = await fetch(pokemon.url);
                             if (!detailsResponse.ok) {
-                                console.warn(`⚠️ Skipping Pokémon ${pokemon.name} (ID: ${details.id}) due to an error (${detailsResponse.status})`);
+                                // Use Pokémon.name here since details aren't available yet
+                                console.warn(`⚠️ Skipping Pokémon ${pokemon.name} due to an error (${detailsResponse.status})`);
                                 return null;
                             }
                             return await detailsResponse.json();
@@ -81,26 +90,32 @@ class ImportController {
                 );
 
                 const validPokemon = detailedPokemon.filter(p => p !== null);
+
+                // Known missing/broken entry — explicitly skip it
                 for (const detailPokemon of detailedPokemon) {
-                    if (detailPokemon.id === 10279) {
+                    if (detailPokemon && detailPokemon.id === 10279) {
                         console.warn("⚠️ Skipping missing Pokémon (ID: 10279)");
                     }
                 }
 
                 for (const details of validPokemon) {
+                    // Generate local UUID for the DB primary key, keep API id in api_id column
                     let pokemon_id = uuidv4();
                     const query = "INSERT INTO main.pokemons (id, name, weight, api_id, base_experience) VALUES (?, ?, ?, ?, ?)";
                     this.db.prepare(query).run(pokemon_id, details.name, details.weight, details.id, details.base_experience);
 
+                    // Log at least one ability for debugging; warn if none
                     if (details.abilities.length > 0) {
                         console.log(details.abilities[0].ability.name);
                     } else {
                         console.warn(`⚠️ Pokémon ${details.name} has no abilities.`);
                     }
 
+                    // Deduplicate abilities per Pokémon before linking
                     const uniqueAbilities = new Set(details.abilities.map(a => a.ability.name));
 
                     for (const abilityName of uniqueAbilities) {
+                        // Link to pre-existing abilities in DB (retrieved earlier)
                         await this.linkPokemonToAbility(abilityName, pokemon_id);
                     }
                 }
@@ -114,6 +129,7 @@ class ImportController {
         }
 
         console.log("✅ All Pokémon fetched and stored.");
+        // Post-process: ensure any remaining missing entries are inserted
         this.pokemons(allPokemon);
     }
 
@@ -125,6 +141,7 @@ class ImportController {
             for (const pokemon of allPokemon) {
                 const pokemonsInDb = this.db.prepare(pokemonsInDbQuery).get(pokemon.name);
                 if (!pokemonsInDb) {
+                    // Placeholder: insert missing Pokémon here if desired to avoid duplicates
                     console.log(`✅ Inserting missing Pokémon: ${pokemon.name}`);
                     // Insert the Pokémon here if missing
                 }
@@ -138,7 +155,7 @@ class ImportController {
 
     async linkPokemonToAbility(abilitiesName, pokemon_id) {
 
-
+        // Lookup ability by name to get internal id
         const query = "SELECT * FROM abilities WHERE name = ?";
         const result = await this.db.prepare(query).get(abilitiesName);
         const inputPokemonAbility = "INSERT INTO ability_pokemon (ability_id, pokemon_id) VALUES (?, ?)";
@@ -159,6 +176,7 @@ class ImportController {
         const result = this.db.prepare(query).all();
         let totalCount = 0;
 
+        // Get total from API to decide whether to fetch
         try {
             const response = await fetch("https://pokeapi.newdeveloper.nl/api/v2/ability?limit=1");
             if (!response.ok) {
@@ -197,6 +215,7 @@ class ImportController {
             return;
         }
 
+        // Track fetched IDs to avoid duplicates if API has inconsistencies
         let fetchedAbilityIds = new Set();
 
         while (offset < totalCount) {
@@ -238,6 +257,7 @@ class ImportController {
                 const validAbilities = detailedAbilities.filter(a => a !== null);
 
                 for (const details of validAbilities) {
+                    // Use UUIDs for local primary keys and keep API id for reference
                     let ability_id = uuidv4();
                     console.log(`🗄️ Storing ability in DB: ${details.name} (ID: ${details.id})`);
                     const query = "INSERT INTO main.abilities (id, name, api_id) VALUES (?, ?, ?)";
