@@ -1,75 +1,78 @@
-#!/usr/bin/env node
-
-/**
- * Module dependencies.
- */
+import { Server } from "socket.io";
 import app from '../app.js';
 import debugLib from 'debug';
 import http from 'http';
+import passport from "passport";
 const debug = debugLib('expressjs-module-starterkit:server');
-
-/**
- * Get port from environment and store in Express.
- */
 
 const hostname = process.env.HOSTNAME || '127.0.0.1';
 app.set('hostname', hostname);
 
-/**
- * Get port from environment and store in Express.
- */
-
 const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
-/**
- * Create HTTP server.
- */
-
 const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:3000', 'http://localhost:5173'],
+  }
+});
 
-/**
- * Listen on provided port, on all network interfaces.
- */
+io.engine.use((req, res, next) => {
+  const isHandshake = req._query.sid === undefined;
+  if (isHandshake) {
+    passport.authenticate("jwt", { session: false })(req, res, next);
+  } else {
+    next();
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('Someone is connecting through WebSocket');
+
+  let name = '';
+  if (socket.request.user && socket.request.user.name) {
+    name = socket.request.user.name;
+  }
+
+
+  io.emit('user connected', { 'name': name, 'message': name + ' has entered the chat' });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+    io.emit('user disconnected', { 'name': name, 'message': 'A user has disconnected' });
+  });
+
+  socket.on('chat message', (msg) => {
+    console.log('server Received message:', msg);
+    io.emit('chat message', msg);
+  });
+});
+
+app.set('io', io);
 
 server.listen(port, hostname);
-
 server.on('error', onError);
 server.on('listening', onListening);
 
-/**
- * Normalize a port into a number, string, or false.
- */
 function normalizePort(val) {
   const port = parseInt(val, 10);
-
   if (isNaN(port)) {
-    // named pipe
     return val;
   }
-
   if (port >= 0) {
-    // port number
     return port;
   }
-
   return false;
 }
-
-/**
- * Event listener for HTTP server "error" event.
- */
 
 function onError(error) {
   if (error.syscall !== 'listen') {
     throw error;
   }
-
   const bind = typeof port === 'string'
-    ? 'Hostname ' + hostname + ' Pipe ' + port
-    : 'Hostname ' + hostname + ' Port ' + port;
-
-  // handle specific listen errors with friendly messages
+      ? 'Hostname ' + hostname + ' Pipe ' + port
+      : 'Hostname ' + hostname + ' Port ' + port;
   switch (error.code) {
     case 'EACCES':
       console.error(bind + ' requires elevated privileges');
@@ -84,15 +87,11 @@ function onError(error) {
   }
 }
 
-/**
- * Event listener for HTTP server "listening" event.
- */
-
 function onListening() {
   const addr = server.address();
   const bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
+      ? 'pipe ' + addr
+      : 'port ' + addr.port;
   console.log(`Server running on [http://${addr.address}:${addr.port}]\n\nPress Ctrl+C to stop the server\n`);
   debug('Listening on ' + bind);
 }

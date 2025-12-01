@@ -1,16 +1,30 @@
 {
-  "name": "expressjs-module-starterkit",
+  "name": "level-5-1",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "server": "node ./server/bin/www"
+    "server": "node ./server/bin/level-5-1",
+    "dev": "nodemon ./server/bin/level-5-1.js"
   },
   "type": "module",
   "dependencies": {
+    "argon2": "^0.41.1",
+    "better-sqlite3": "^11.8.1",
     "cookie-parser": "~1.4.7",
     "cors": "^2.8.5",
     "debug": "~4.4.0",
-    "express": "5.0.0",
-    "morgan": "~1.10.0"
+    "dotenv": "^16.4.7",
+    "express": "^5.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "~1.10.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "uuid": "^11.0.5",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
   }
 }

@@ -1,0 +1,57 @@
+### GET request to example server
+POST http://127.0.0.1:3000/pokemons/register
+Content-Type: application/json
+
+{
+  "username": "john",
+  "email": "john@john.com",
+  "password": "john"
+}
+
+###
+
+POST http://127.0.0.1:3000/pokemons/login
+Content-Type: application/json
+
+{
+  "email_or_username": "john@john.com",
+  "password": "john"
+}
+
+###
+
+GET http://127.0.0.1:3000/auth
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbF9vcl91c2VybmFtZSI6InRlc3RAdGVzdC5jb20iLCJpYXQiOjE3NDI0NzUwNTgsImV4cCI6MTc0MjQ4NTg1OH0.rvabKSvnSxtAVBIB7dGE9vzuBCFy_0ppz5C0KtEnoYo
+
+{
+  "username": "testuser",
+  "password": "securepassword"
+}
+
+###
+
+POST http://127.0.0.1:3000/pokemons/add
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbF9vcl91c2VybmFtZSI6InRlc3RAdGVzdC5jb20iLCJpYXQiOjE3NDI0NzUwNTgsImV4cCI6MTc0MjQ4NTg1OH0.rvabKSvnSxtAVBIB7dGE9vzuBCFy_0ppz5C0KtEnoYo
+
+{
+  "pokemons": ["pikAchU" , "charizard ", "buLbasaur", "gengar", "lucario", "Charmander", "snorlax", "eevee", "togepi"],
+  "favorites": [false, true, false, false, false, false, true, true, false]
+}
+
+###
+
+GET http://127.0.0.1:3000/pokemons/favorite
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbF9vcl91c2VybmFtZSI6InRlc3RAdGVzdC5jb20iLCJpYXQiOjE3NDI0NzUwNTgsImV4cCI6MTc0MjQ4NTg1OH0.rvabKSvnSxtAVBIB7dGE9vzuBCFy_0ppz5C0KtEnoYo
+
+###
+
+POST http://127.0.0.1:3000/pokemons/favorite/remove
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbF9vcl91c2VybmFtZSI6Iml3YW4iLCJpYXQiOjE3NDI0NzQ4MTcsImV4cCI6MTc0MjQ4NTYxN30.dMiqysbrZ1KR2PoLwaisyS17cVJic1EanZutqa39aMw
+
+{
+  "pokemons": ["charizard", "eevee"]
+}

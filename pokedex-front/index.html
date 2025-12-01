@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/pokeball.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="front.css">
+
+      <title>Pokedex</title>
+  </head>
+  <body>
+
+
+  <div id="app">
+
+      <h1>Pokedex</h1>
+
+
+      <p>
+
+          <router-link to="/pokemon">Pokemon overzicht</router-link><br>
+
+          <router-link to="/pokemon/register">register</router-link> <br>
+
+          <router-link to="/pokemon/login">login</router-link> <br>
+
+          <router-link to="/pokemon/favorites">inventory </router-link> <br>
+
+          <router-link to="/pokemon/users">users and favorite pokemons</router-link>
+
+      </p>
+
+
+
+      <router-view></router-view>
+
+  </div>
+  <script src="./src/main.js" type="module"></script>
+  </body>
+</html>
